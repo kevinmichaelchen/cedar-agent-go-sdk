@@ -22,11 +22,14 @@ func main() {
 	ctx := context.Background()
 	c := &http.Client{}
 	client := sdk.NewClient(c)
-	allowed, err := client.Check(ctx, sdk.CheckRequest{
+	res, err := client.Check(ctx, sdk.CheckRequest{
 		Principal: `User::"42"`,
 		Action: "viewFoobar",
 		Resource: `Foobar::"101"`,
 	})
-	fmt.Println(allowed, err)
+	if err != nil {
+		panic(err)
+    }
+	fmt.Printf("allowed: %t", res.Decision == "Allow")
 }
 ```
