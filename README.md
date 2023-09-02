@@ -1,5 +1,7 @@
 # cedar-agent-go-sdk
 
+[![GoReportCard example](https://goreportcard.com/badge/github.com/kevinmichaelchen/cedar-agent-go-sdk)](https://goreportcard.com/report/github.com/kevinmichaelchen/cedar-agent-go-sdk)
+
 [Cedar Agent][cedar-agent] is an HTTP Server that runs the [Cedar][cedar] authorization engine.
 
 It's the easiest way to get up and running with Cedar locally, offering a REST API for managing your entities and policies, as well as policy evaluation.
