@@ -3,6 +3,7 @@
 [![GoReportCard example](https://goreportcard.com/badge/github.com/kevinmichaelchen/cedar-agent-go-sdk)](https://goreportcard.com/report/github.com/kevinmichaelchen/cedar-agent-go-sdk)
 [![GoDoc reference example](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/kevinmichaelchen/cedar-agent-go-sdk)
 [![version](https://img.shields.io/github/v/release/kevinmichaelchen/cedar-agent-go-sdk?include_prereleases&label=latest&logo=ferrari)](https://github.com/kevinmichaelchen/cedar-agent-go-sdk/releases/latest)
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/kevinmichaelchen/cedar-agent-go-sdk)
 
 [Cedar Agent][cedar-agent] is an HTTP Server that runs the [Cedar][cedar] authorization engine.
 
