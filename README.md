@@ -73,6 +73,49 @@ func isAuthorized(ctx context.Context, client *sdk.Client, r sdk.CheckRequest) b
 	if err != nil {
 		panic(err)
 	}
-	return res.Decision == "Allow"
+	return res.Allowed
+}
+```
+
+### Authorizing a batch
+
+Sometimes you want to authorize a principal against multiple resources, 
+potentially with multiple actions.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"github.com/kevinmichaelchen/cedar-agent-go-sdk/sdk"
+	"net/http"
+)
+
+func main() {
+	ctx := context.Background()
+	client := initClient()
+
+	principal := `User::"42"`
+
+	requests := map[sdk.Action][]sdk.Resource{
+		"viewFoo": {
+			`Foo::"12"`,
+			`Foo::"39"`,
+			`Foo::"72"`,
+		},
+		"viewBar": {
+			`Bar::"12"`,
+		},
+	}
+
+	out, err := client.CheckBatch(ctx, principal, requests, 5)
+	if err != nil {
+		panic(err)
+	}
+
+	for req, decision := range out {
+		fmt.Printf("request: %v, decision: %t", req, decision.Allowed)
+	}
 }
 ```

@@ -9,16 +9,17 @@ import (
 
 type decision struct {
 	Request  CheckRequest
-	Response CheckResponse
+	Response Decision
 }
 
 // CheckBatch - Performs a batch of authorization requests using Cedar Agent.
 func (c Client) CheckBatch(
 	ctx context.Context,
-	reqs []CheckRequest,
+	principal Principal,
+	reqs map[Action][]Resource,
 	// TODO functional options
 	numWorkers int,
-) (map[CheckRequest]CheckResponse, error) {
+) (map[CheckRequest]Decision, error) {
 	g, ctx := errgroup.WithContext(ctx)
 
 	reqChan := make(chan CheckRequest)
@@ -28,11 +29,17 @@ func (c Client) CheckBatch(
 	// picked up by our workers in the worker pool as soon as possible.
 	g.Go(func() error {
 		defer close(reqChan)
-		for _, req := range reqs {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case reqChan <- req:
+		for action, resources := range reqs {
+			for _, resource := range resources {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case reqChan <- CheckRequest{
+					Principal: principal,
+					Action:    action,
+					Resource:  resource,
+				}:
+				}
 			}
 		}
 		return nil
@@ -76,7 +83,7 @@ func (c Client) CheckBatch(
 
 	// Step 3: Reduce
 	// Transform decisions into the final output.
-	ret := map[CheckRequest]CheckResponse{}
+	ret := map[CheckRequest]Decision{}
 	g.Go(func() error {
 		for d := range decisions {
 			ret[d.Request] = d.Response

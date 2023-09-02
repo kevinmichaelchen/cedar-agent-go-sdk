@@ -9,52 +9,99 @@ import (
 	"net/http"
 )
 
+type Principal string
+type Action string
+type Resource string
+
 // CheckRequest - Provides a principal, action, and resource for Cedar Agent to
 // evaluate an authorization decision.
 type CheckRequest struct {
-	Principal string `json:"principal"`
-	Action    string `json:"action"`
-	Resource  string `json:"resource"`
+	// Principal is typically the user.
+	Principal Principal `json:"principal"`
+	// Action is the verb (e.g., read, write, update, view, list)
+	Action Action `json:"action"`
+	// Resource is the thing being accessed.
+	Resource Resource `json:"resource"`
 }
 
-// CheckResponse - An authorization decision.
-type CheckResponse struct {
-	Decision    string `json:"decision"`
-	Diagnostics struct {
-		Errors []interface{} `json:"errors"`
-		Reason []string      `json:"reason"`
-	} `json:"diagnostics"`
+// Decision - An authorization decision.
+type Decision struct {
+	// Allowed - Whether the principal is allowed to perform the action on the
+	// resource.
+	Allowed bool
+	// Diagnostics - Insight into how the decision was reached.
+	Diagnostics Diagnostics
+}
+
+// IsAuthorizedResponse - HTTP Response from Cedar Agent.
+type IsAuthorizedResponse struct {
+	// Decision - Whether the principal is allowed to perform the action on the
+	// resource.
+	Decision string `json:"decision"`
+	// Diagnostics - Insight into how the decision was reached.
+	Diagnostics Diagnostics `json:"diagnostics"`
+}
+
+// Diagnostics - Sheds light into the evaluation decision.
+type Diagnostics struct {
+	// Errors that occurred during the evaluation decisions.
+	Errors []interface{} `json:"errors"`
+	// Reason that the decision was made (e.g., policies involved).
+	Reason []string `json:"reason"`
 }
 
 // Check - Performs an authorization request using Cedar Agent.
-func (c Client) Check(_ context.Context, payload CheckRequest) (*CheckResponse, error) {
-	reqBody, err := json.Marshal(payload)
+func (c Client) Check(_ context.Context, payload CheckRequest) (*Decision, error) {
+	// Build request
+	req, err := buildCheckRequest(payload, c.cfg.baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal http request body: %w", err)
+		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/v1/is_authorized", c.cfg.baseURL)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(reqBody))
-	if err != nil {
-		return nil, fmt.Errorf("unable to build http request: %w", err)
-	}
-
+	// Execute request
 	res, err := c.c.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to execute http request: %w", err)
 	}
 
+	var response IsAuthorizedResponse
+
+	err = unmarshalResponse(res, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Decision{
+		Allowed:     response.Decision == "Allow",
+		Diagnostics: response.Diagnostics,
+	}, nil
+}
+
+func unmarshalResponse(res *http.Response, target any) error {
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read http response: %w", err)
+		return fmt.Errorf("unable to read http response: %w", err)
 	}
 
-	var response CheckResponse
-
-	err = json.Unmarshal(resBody, &response)
+	err = json.Unmarshal(resBody, &target)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal http response: %w", err)
+		return fmt.Errorf("unable to unmarshal http response: %w", err)
 	}
 
-	return &response, nil
+	return nil
+}
+
+func buildCheckRequest(payload CheckRequest, baseURL string) (*http.Request, error) {
+	reqBody, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal http request body: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/v1/is_authorized", baseURL)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("unable to build http request: %w", err)
+	}
+
+	return req, nil
 }
