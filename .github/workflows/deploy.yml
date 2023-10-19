@@ -23,7 +23,7 @@ jobs:
       - name: Setup pkgx
         uses: pkgxdev/setup@v1
         with:
-          +: bun@latest
+          +: bun@1
       - name: Install sharp
         # Sharp, Astro's default image processor, doesn't support Bun yet...
         # So we have to do this hacky workaround...
