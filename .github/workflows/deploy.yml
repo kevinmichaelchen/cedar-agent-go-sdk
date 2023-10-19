@@ -20,6 +20,19 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v3
+      - name: Setup pkgx
+        uses: pkgxdev/setup@v1
+        with:
+          +: bun@latest
+      - name: Install sharp
+        # Sharp, Astro's default image processor, doesn't support Bun yet...
+        # So we have to do this hacky workaround...
+        # https://github.com/lovell/sharp/issues/3511#issuecomment-1690042800
+        run: |
+          cd docs && \
+          bun install && \
+          cd ./node_modules/sharp && \
+          bun install
       - name: Install, build, and upload your site
         uses: withastro/action@v1
         with:
