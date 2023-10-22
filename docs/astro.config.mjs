@@ -3,7 +3,8 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://kevinmichaelchen.github.io/cedar-agent-go-sdk',
+  site: 'https://kevinmichaelchen.github.io',
+  base: '/cedar-agent-go-sdk',
   integrations: [
     starlight({
       title: 'My Docs',
